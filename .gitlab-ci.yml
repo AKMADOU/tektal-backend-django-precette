@@ -1,0 +1,19 @@
+image: python:3.5
+
+stages:
+  - deploy
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq sshpass
+
+deploy_dev:
+  stage: deploy
+  environment: dev
+  only:
+    - pre-recette
+  script:
+    - sshpass -V
+    - export SSHPASS=$USER_PASS
+    - sshpass -e scp -o stricthostkeychecking=no -r * root@159.89.32.58:/var/www/tektal-backend-django
+    - sshpass -e  ssh root@159.89.32.58 'docker-compose -f /var/www/tektal-backend-django/docker-compose.prod.yml  up -d --build'
+    - sshpass -e ssh root@159.89.32.58 'docker-compose -f /var/www/tektal-backend-django/docker-compose.prod.yml exec -T web python manage.py migrate'
